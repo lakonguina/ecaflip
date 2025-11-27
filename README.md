@@ -1,54 +1,27 @@
-# Stock Prediction with AI
+# Ecaflip
 
-A project to predict stock prices using insider trading data from the French financial markets. Basically trying to see if we can beat the market by following what company insiders are doing.
+Research project exploring whether **insider trading declarations** on French markets carry a predictive signal on stock returns.
 
-**Live demo**: https://s1ge.com (abandoned project)
+## Goal
 
-## What it does
+Company executives must declare their trades to the AMF (French market regulator). Ecaflip collects these declarations, turns them into features and trains a model to decide which trades are worth following, then backtests the resulting strategies against the CAC 40.
 
-This project scrapes insider trading data from the **AMF BDIF** (French financial regulator's database) and uses AI to predict stock movements. The idea is that insiders know more than the public, so their trades can be predictive signals.
+The approach is inspired by [Quiver Quant's Corporate Insider Model](https://quiverquant.medium.com/quiver-quants-corporate-insider-model-752382b9dfd), adapted from US SEC filings to French AMF declarations.
 
-## The Data Pipeline
+## How it works
 
-### 1. Data Collection (`worker/`)
-- Fetches insider trading declarations from AMF's API
-- Downloads PDF documents for each declaration
-- Parses French-formatted documents (dates, amounts, etc.)
-- Stores everything in PostgreSQL
+| Component | Role | Stack |
+|---|---|---|
+| `worker/` | Fetches declarations from the AMF BDIF API, parses the PDFs, retrieves tickers and historical prices | Python, Celery, Redis, yfinance |
+| `database/` | Schema and migrations for companies, insiders, transactions, quotes and strategies | PostgreSQL, SQLModel, Alembic |
+| `model.py` / `model.ipynb` | Feature engineering (insider Elo rating, buy/sell consensus, holdings ratio, momentum) and classification | pandas, LightGBM, Optuna |
+| `app/` | Web dashboard: strategy returns vs. benchmark, drawdowns, monthly returns, trade history | FastAPI, Jinja2, Chart.js |
 
-### 2. Model (`model.ipynb` & `model.py`)
+## Run locally
 
-**Features:**
-- **Insider Elo Rating**: Like chess ELO but for insiders - tracks how good each insider is at timing the market
-- **Consensus Analysis**: Counts buyers vs sellers over time windows to see if insiders are bullish/bearish
-- **Holdings Ratio**: How much of their position each insider is trading
-- **Momentum**: Price trends using linear regression
-- **Market Timing**: Performance relative to CAC40
+```bash
+cp .env.example .env   # fill in Postgres / Redis settings
+docker compose up --build
+```
 
-**Model:**
-- Uses LightGBM for the heavy lifting
-- Hyperparameter optimization with Optuna
-- Cross-validation and backtesting
-- Portfolio construction based on model predictions
-
-The notebook (`model.ipynb`) shows the full ML workflow - from data preprocessing to feature engineering to model training and evaluation. It's basically a complete ML pipeline for financial prediction.
-
-### 3. Web App (`app/`)
-- FastAPI backend to serve the strategies
-- Shows performance charts, transaction details
-- Calculates returns, drawdowns, Sharpe ratios
-
-## The approach
-
-The core idea is that insider trading data contains predictive signals that most people ignore. The ML model learns patterns like:
-
-- Which insiders are consistently good at timing
-- What transaction sizes indicate strong conviction
-- How consensus among insiders affects stock performance
-- Market timing patterns
-
-The `model.ipynb` notebook shows the full ML pipeline - data cleaning, feature engineering, model training, hyperparameter tuning, and backtesting.
-
-## Note
-
-This was initially designed as a SaaS but ended up being more of a research project. The code shows a complete ML pipeline for financial predictions.
+The dashboard is served on http://localhost:8000.
