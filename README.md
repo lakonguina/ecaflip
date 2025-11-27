@@ -2,8 +2,6 @@
 
 A project to predict stock prices using insider trading data from the French financial markets. Basically trying to see if we can beat the market by following what company insiders are doing.
 
-**Live demo**: https://s1ge.com (abandoned project)
-
 ## What it does
 
 This project scrapes insider trading data from the **AMF BDIF** (French financial regulator's database) and uses AI to predict stock movements. The idea is that insiders know more than the public, so their trades can be predictive signals.
